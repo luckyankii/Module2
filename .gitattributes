@@ -1,2 +1,12 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+node_modules
+.env
+.next
+coverage
+coverage.json
+typechain
+typechain-types
+
+# Hardhat files
+cache
+artifacts
+
