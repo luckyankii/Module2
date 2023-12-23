@@ -1,62 +1,89 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-contract SecureWallet {
-    address payable public walletOwner;
-    uint256 public walletBalance;
+contract Assessment { 
+    address payable public owner;
+    uint256 public balance;
+    uint256 public pin;
+    uint256 public loanAmount;
+    uint256 public loanTerm; // in months
+    uint256 public monthlyRepayment;
 
-    event FundsDeposited(uint256 amount);
-    event FundsWithdrawn(uint256 amount);
-    event NFTPurchased(uint256 _number);
+    event Deposit(uint256 amount);
+    event Withdraw(uint256 amount);
+    event PinChanged(uint256 newPin);
+    event LoanRequested(uint256 loanAmount, uint256 loanTerm, uint256 monthlyRepayment);
 
-    constructor(uint initialBalance) payable {
-        walletOwner = payable(msg.sender);
-        walletBalance = initialBalance;
+    constructor(uint256 initBalance, uint256 _pin) payable {
+        owner = payable(msg.sender);
+        balance = initBalance;
+        pin = _pin;
     }
 
-    function getWalletBalance() public view returns (uint256) {
-        return walletBalance;
+    function getBalance() public view returns (uint256) {
+        return balance;
     }
 
-    function depositFunds(uint256 _amount) public payable {
-        try this.walletBalance += _amount {
-            emit FundsDeposited(_amount);
-        } catch {
-            revert("Deposit failed");
+    function deposit(uint256 _amount) public payable {
+        require(msg.sender == owner, "You are not the owner of this account");
+        uint256 _previousBalance = balance;
+
+        // perform transaction
+        balance += _amount;
+
+        // assert transaction completed successfully
+        assert(balance == _previousBalance + _amount);
+
+        // emit the event
+        emit Deposit(_amount);
+    }
+
+    error InsufficientBalance(uint256 balance, uint256 withdrawAmount);
+
+    function withdraw(uint256 _withdrawAmount) public {
+        require(msg.sender == owner, "You are not the owner of this account");
+        uint256 _previousBalance = balance;
+        if (balance < _withdrawAmount) {
+            revert
+                InsufficientBalance({
+                    balance: balance,
+                    withdrawAmount: _withdrawAmount
+                });
         }
+
+        // withdraw the given amount
+        balance -= _withdrawAmount;
+
+        // assert the balance is correct
+        assert(balance == (_previousBalance - _withdrawAmount));
+
+        // emit the event
+        emit Withdraw(_withdrawAmount);
     }
 
-    // Custom error
-    error InsufficientFunds(uint256 balance, uint256 withdrawAmount);
+    function changePin(uint256 _newPin) public {
+        require(msg.sender == owner, "You are not the owner of this account");
+        pin = _newPin;
 
-    function withdrawFunds(uint256 _withdrawAmount) public {
-        try this.walletBalance -= _withdrawAmount {
-            emit FundsWithdrawn(_withdrawAmount);
-        } catch InsufficientFunds(uint256 currentBalance, uint256 requestedAmount) {
-            revert string(abi.encodePacked("Insufficient funds. Current balance: ", currentBalance, ", Requested amount: ", requestedAmount));
-        } catch {
-            revert("Withdrawal failed");
-        }
+        // emit the event
+        emit PinChanged(_newPin);
     }
 
-    function getWalletAddress() public view returns (address) {
-        return address(this);
+    function getPin() public view returns (uint256) {
+        require(msg.sender == owner, "You are not the owner of this account");
+        return pin;
     }
 
-    function getWalletContractBalance() public view returns (uint256) {
-        try this.getWalletAddress().balance {
-            // No need to catch here if it's just a view function
-            return address(this).balance;
-        } catch {
-            revert("Failed to get wallet contract balance");
-        }
-    }
+    function requestLoan(uint256 _requestedLoanAmount, uint256 _loanTermInMonths) public {
+        require(msg.sender == owner, "You are not the owner of this account");
+        require(_requestedLoanAmount > 0, "Loan amount must be greater than 0");
+        require(_loanTermInMonths > 0, "Loan term must be greater than 0");
 
-    function purchaseNFT(uint256 _number) public {
-        try this.withdrawFunds(_number) {
-            emit NFTPurchased(_number);
-        } catch {
-            revert("NFT purchase failed");
-        }
+        loanAmount = _requestedLoanAmount;
+        loanTerm = _loanTermInMonths;
+        monthlyRepayment = (_requestedLoanAmount / _loanTermInMonths);
+
+        // emit the event
+        emit LoanRequested(_requestedLoanAmount, _loanTermInMonths, monthlyRepayment);
     }
 }

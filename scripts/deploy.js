@@ -1,28 +1,22 @@
-// Import the Hardhat Runtime Environment explicitly. This step is optional,
-// but it's useful when running the script independently using `node <script>`.
-//
-// Alternatively, you can execute the script with `npx hardhat run <script>`.
-// When doing so, Hardhat will compile your contracts, add the members of
-// the Hardhat Runtime Environment to the global scope, and execute the script.
+const hre = require("hardhat");
 
-const hardhatRuntime = require("hardhat");
+async function main() {
+  // Set the desired initial balance and PIN
+  const initBalance = 1000;
+  const _pin = 1001;
 
-async function deployContract() {
-  const initialBalance = 1;
-  const AssessmentContract = await hardhatRuntime.ethers.getContractFactory(
-    "Assessment"
-  );
-  const deployedContract = await AssessmentContract.deploy(initialBalance);
-  await deployedContract.deployed();
+  const Assessment = await hre.ethers.getContractFactory("Assessment");
+  const assessment = await Assessment.deploy(initBalance, _pin);
+  await assessment.deployed();
 
   console.log(
-    `Contract deployed with an initial balance of ${initialBalance} ETH to ${deployedContract.address}`
+    `A contract with balance of ${initBalance} ETH and PIN ${_pin} deployed to ${assessment.address}`
   );
 }
 
-// Following this pattern allows us to use async/await universally
-// and handle errors appropriately.
-deployContract().catch((error) => {
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
+main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
